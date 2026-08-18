@@ -42,6 +42,9 @@
         // Output directory (relative to ~/dev/ns-3-dev)
         "experimentDir": "latency/highway/presub",
 
+        // Pcap capture on all P2P/CSMA devices (debug tool; set true to trace)
+        // "enablePcapTrace": true,
+
         // Cell load / background traffic
         // "numBgUes": 1,
         // "bgTrafficMbps": 5,
