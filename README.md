@@ -101,7 +101,7 @@ Confirm the scenario actually built:
 | Component | Pin | Why |
 |---|---|---|
 | `kaiii708/ns-3-dev` | branch `zenoh-experiment` = tag `ns-3.44` + `9175b41fb` | That commit disables `refuse_run_as_root()`; without it `sudo ./ns3 run` aborts |
-| `jerry73204/nr` | `cc2f5411` (`bg-ue-mac-contention`) | Provides `examples/nr-mec-3gpp-calibration.cc`, the scenario every round runs |
+| `jerry73204/nr` | `2e35bb6d` (`bg-ue-mac-contention`) | Provides `examples/nr-mec-3gpp-calibration.cc`, the scenario every round runs |
 
 Then point `EXPERIMENT_CONFIG.json5`'s `ns3_dir` at the checkout (`~` is expanded) and run
 `./check_ns3.sh`.
@@ -196,7 +196,7 @@ directory while launching the baseline subscriber, and nothing at runtime notice
 | Check | Failure means |
 |---|---|
 | `ns3` root refusal is patched out | `sudo ./ns3 run` will abort immediately |
-| `contrib/nr` at `cc2f5411` | Running a different scenario variant than intended |
+| `contrib/nr` at `2e35bb6d` | Running a different scenario variant than intended |
 | Scenario source present | Cannot build `nr-mec-3gpp-calibration` |
 | Build profile is `optimized` | Timing results not comparable with previous runs |
 | Scenario target built | Configured without `--enable-examples` |

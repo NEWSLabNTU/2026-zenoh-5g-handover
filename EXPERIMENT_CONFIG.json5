@@ -1,6 +1,6 @@
 {
     // Location of the ns-3 checkout (~1.5 GB, installed separately -- see the
-    // README). Must be the zenoh-experiment branch with contrib/nr at cc2f5411,
+    // README). Must be the zenoh-experiment branch with contrib/nr at 2e35bb6d,
     // built with -d optimized. Verify with ./check_ns3.sh. "~" is expanded.
     "ns3_dir": "~/dev/ns-3-dev",
 
