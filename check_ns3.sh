@@ -21,7 +21,7 @@ cd "$SCRIPT_DIR" || exit 1
 
 # --- expected state -----------------------------------------------------------
 # nr carries the scenario, so its commit is pinned exactly.
-NR_EXPECTED_COMMIT="b1bedf07b43842511f9f84bc6e7faacb1e9b9c28"
+NR_EXPECTED_COMMIT="466237443002ccb7adcdea8ecb25db37cf1487e5"
 NR_EXPECTED_BRANCH="bg-ue-mac-contention"
 # ns-3 is branch zenoh-experiment = tag ns-3.44 + this one commit. Advisory only:
 # the sudo patch itself is the hard requirement, and this SHA legitimately
