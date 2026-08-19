@@ -81,7 +81,7 @@ wrapper run under `sudo`, and the `nr` branch carrying the scenario.
 
 ```bash
 git clone -b zenoh-experiment git@github.com:kaiii708/ns-3-dev.git
-git clone -b bg-ue-mac-contention git@github.com:kaiii708/nr.git ns-3-dev/contrib/nr
+git clone -b bg-ue-mac-contention https://github.com/jerry73204/nr.git ns-3-dev/contrib/nr
 cd ns-3-dev
 ./ns3 configure -d optimized --enable-examples
 ./ns3 build
@@ -101,7 +101,7 @@ Confirm the scenario actually built:
 | Component | Pin | Why |
 |---|---|---|
 | `kaiii708/ns-3-dev` | branch `zenoh-experiment` = tag `ns-3.44` + `9175b41fb` | That commit disables `refuse_run_as_root()`; without it `sudo ./ns3 run` aborts |
-| `kaiii708/nr` | `b1bedf07` (`bg-ue-mac-contention`) | Provides `examples/nr-mec-3gpp-calibration.cc`, the scenario every round runs |
+| `jerry73204/nr` | `cc2f5411` (`bg-ue-mac-contention`) | Provides `examples/nr-mec-3gpp-calibration.cc`, the scenario every round runs |
 
 Then point `EXPERIMENT_CONFIG.json5`'s `ns3_dir` at the checkout (`~` is expanded) and run
 `./check_ns3.sh`.
@@ -196,7 +196,7 @@ directory while launching the baseline subscriber, and nothing at runtime notice
 | Check | Failure means |
 |---|---|
 | `ns3` root refusal is patched out | `sudo ./ns3 run` will abort immediately |
-| `contrib/nr` at `b1bedf07` | Running a different scenario variant than intended |
+| `contrib/nr` at `cc2f5411` | Running a different scenario variant than intended |
 | Scenario source present | Cannot build `nr-mec-3gpp-calibration` |
 | Build profile is `optimized` | Timing results not comparable with previous runs |
 | Scenario target built | Configured without `--enable-examples` |
