@@ -3,12 +3,16 @@
 Build and run the pre-subscription evaluation: three experiments, each with a pre-subscription arm
 and a baseline arm, over an ns-3 5G handover scenario with Zenoh routers in network namespaces.
 
-Zenoh itself is vendored as a **git submodule**, so a clone of this repo pins the exact zenoh
-commits the results came from.
+Zenoh, ns-3 and the 5G-LENA `nr` module are **git submodules**, so a clone of this repo pins the
+exact commits the results came from. Each is a NEWSLab fork of the open-source project, with our
+patches on branches.
 
 ```
-zenohd-auto-deploy/
-├── zenoh/                     git submodule -> kaiii708/zenoh (the six experiment branches)
+2026-zenoh-5g-handover/
+├── zenoh/                     submodule -> NEWSLabNTU/zenoh (the six experiment branches)
+├── ns-3/                      submodule -> NEWSLabNTU/ns-3-dev-git (branch zenoh-experiment)
+├── nr/                        submodule -> NEWSLabNTU/5g-lena-nr (branch bg-ue-mac-contention)
+├── setup_ns3.sh               links nr into ns-3/contrib/nr; --build configures and builds ns-3
 ├── build_experiments.sh       cross-builds each branch into zenoh/target/<branch>/
 ├── check_configs.sh           verifies configs match built binaries (run before experiments)
 ├── check_ns3.sh               verifies the ns-3 checkout: pins, sudo patch, optimized build
@@ -45,13 +49,13 @@ The publisher (`my_z_pub`) is the same in every arm.
 |---|---|
 | Docker | Runs both the `cross` build containers and the router containers |
 | [`cross`](https://github.com/cross-rs/cross) | `cargo install cross` — cross-compiles to `x86_64-unknown-linux-musl` |
-| ns-3 + the `nr` module | ~1.5 GB, installed separately at pinned commits — see below |
+| ns-3 + the `nr` module | Submodules, ~1.5 GB once built — see below |
 | Python ≥ 3.8 + `json5` | `pip install json5` |
 | `tmux`, `rsync` | Session management, data transfer |
 | Passwordless sudo drop-in | Required — see below; netns/TAP setup runs unattended |
 
-ns-3 is not a submodule — it is large, and `contrib/nr` is an active multi-branch workspace. It is
-pinned by **verification** instead: `check_ns3.sh` confirms the checkout is in the expected state.
+The submodules pin ns-3 and `nr` in a fresh clone; `check_ns3.sh` confirms the working tree is
+still in that state before a run.
 
 ### Passwordless sudo
 
@@ -76,15 +80,13 @@ of hanging. Override the prefix without editing any file:
 
 ### Installing ns-3 + nr
 
-Two specific commits are required: an ns-3 fork whose only change to `ns-3.44` lets the `ns3`
-wrapper run under `sudo`, and the `nr` branch carrying the scenario.
+Two specific commits are required: an ns-3 branch whose only change to `ns-3.44` lets the `ns3`
+wrapper run under `sudo`, and the `nr` branch carrying the scenario. Both are submodules; ns-3
+finds modules under `contrib/`, so `setup_ns3.sh` links `nr/` to `ns-3/contrib/nr` (and lists the
+link in ns-3's `.git/info/exclude`, so the ns-3 checkout stays clean):
 
 ```bash
-git clone -b zenoh-experiment git@github.com:kaiii708/ns-3-dev.git
-git clone -b bg-ue-mac-contention https://github.com/jerry73204/nr.git ns-3-dev/contrib/nr
-cd ns-3-dev
-./ns3 configure -d optimized --enable-examples
-./ns3 build
+./setup_ns3.sh --build     # init the submodules, link nr, configure -d optimized --enable-examples, build
 ```
 
 **The `-d optimized` is required, not a preference.** A debug build carries assertions and no
@@ -95,30 +97,37 @@ produce quietly wrong figures, so `check_ns3.sh` treats a non-optimized profile 
 Confirm the scenario actually built:
 
 ```bash
-./ns3 show targets | grep nr        # nr-mec-3gpp-calibration must appear
+(cd ns-3 && ./ns3 show targets | grep nr)   # nr-mec-3gpp-calibration must appear
 ```
 
 | Component | Pin | Why |
 |---|---|---|
-| `kaiii708/ns-3-dev` | branch `zenoh-experiment` = tag `ns-3.44` + `9175b41fb` | That commit disables `refuse_run_as_root()`; without it `sudo ./ns3 run` aborts |
-| `jerry73204/nr` | `2e35bb6d` (`bg-ue-mac-contention`) | Provides `examples/nr-mec-3gpp-calibration.cc`, the scenario every round runs |
+| `ns-3` → `NEWSLabNTU/ns-3-dev-git` | branch `zenoh-experiment` = tag `ns-3.44` + `9175b41fb` | That commit disables `refuse_run_as_root()`; without it `sudo ./ns3 run` aborts |
+| `nr` → `NEWSLabNTU/5g-lena-nr` | `2e35bb6d` (`bg-ue-mac-contention`) | Provides `examples/nr-mec-3gpp-calibration.cc`, the scenario every round runs |
 
-Then point `EXPERIMENT_CONFIG.json5`'s `ns3_dir` at the checkout (`~` is expanded) and run
+`EXPERIMENT_CONFIG.json5`'s `ns3_dir` defaults to the `ns-3` submodule; point it elsewhere to use
+another checkout (`~` is expanded, a relative path is taken from this repo). Then run
 `./check_ns3.sh`.
+
+`NEWSLabNTU/5g-lena-nr` carries the full history of the upstream
+[cttc-lena/nr](https://gitlab.com/cttc-lena/nr) on GitLab, which has no GitHub mirror to fork;
+update its upstream branches by fetching from GitLab and pushing.
 
 ---
 
 ## First-time setup
 
 ```bash
-git clone --recurse-submodules git@github.com:kaiii708/zenohd-auto-deploy.git
-cd zenohd-auto-deploy
+git clone --recurse-submodules https://github.com/NEWSLabNTU/2026-zenoh-5g-handover.git
+cd 2026-zenoh-5g-handover
+./setup_ns3.sh --build
 ```
 
 Already cloned without submodules:
 
 ```bash
 git submodule update --init
+./setup_ns3.sh --build
 ```
 
 No further configuration is needed — `build_experiments.sh` finds the submodule relative to its own
@@ -202,7 +211,7 @@ directory while launching the baseline subscriber, and nothing at runtime notice
 | Scenario target built | Configured without `--enable-examples` |
 | ns-3 on `zenoh-experiment` | Warning only — a rebase changes the SHA legitimately |
 
-Point it at another checkout with `./check_ns3.sh --dir /path/to/ns-3-dev`.
+Point it at another checkout with `./check_ns3.sh --dir /path/to/ns-3`.
 
 ---
 
@@ -282,8 +291,9 @@ binaries. Leave it unset for real runs.
 | `check_configs.sh` reports `WRONG` | A config's `excutable` disagrees with its branch — fix the config |
 | Experiment runs but numbers look like the other arm | Ran with the wrong `-n`; `check_configs.sh` plus matching names prevent this |
 | ns-3 aborts with "Refusing to run as root" | Wrong ns-3 branch — use `zenoh-experiment` |
-| `check_ns3.sh` reports a wrong `contrib/nr` commit | `git -C <ns3_dir>/contrib/nr checkout bg-ue-mac-contention` |
-| `check_ns3.sh` reports a non-optimized profile | `./ns3 configure -d optimized --enable-examples && ./ns3 build` |
+| `check_ns3.sh` reports a wrong `contrib/nr` commit | `git submodule update nr` (or `git -C nr checkout bg-ue-mac-contention`) |
+| `check_ns3.sh` reports `contrib/nr` is not a git checkout | `./setup_ns3.sh` |
+| `check_ns3.sh` reports a non-optimized profile | `./setup_ns3.sh --build` |
 | `nr-mec-3gpp-calibration` missing from `./ns3 show targets` | Configured without `--enable-examples` |
 
 ---

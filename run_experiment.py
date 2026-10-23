@@ -29,7 +29,7 @@ import json5
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 LAUNCH_SCRIPT = os.path.join(SCRIPT_DIR, 'launch_nodes.py')
-NS3_DIR = os.path.expanduser('~/dev/ns-3-dev')
+NS3_DIR = os.path.join(SCRIPT_DIR, 'ns-3')
 # Prefix for the privileged ns-3 invocation. "-n" makes sudo fail immediately
 # rather than block on a password prompt -- which would otherwise hang the round
 # after the containers and TAP devices are already up. Override with ZENOH_SUDO,
@@ -90,10 +90,10 @@ def run_round(setting: dict, round_num: int, global_config: dict) -> bool:
     net_args = ['-n', network_config] if network_config else []
 
     ns3_config = setting['ns3']
-    # expanduser matters here: NS3_DIR is already expanded, but a value coming
-    # from the config file is not, so a literal "~/dev/ns-3-dev" would be passed
-    # to subprocess as cwd and fail with ENOENT.
-    ns3_dir = os.path.expanduser(global_config.get('ns3_dir', NS3_DIR))
+    # expanduser matters here: a value from the config file is not expanded, so a
+    # literal "~/..." would be passed to subprocess as cwd and fail with ENOENT.
+    # A relative value is resolved against this repo, like the configs' paths.
+    ns3_dir = os.path.join(SCRIPT_DIR, os.path.expanduser(global_config.get('ns3_dir', NS3_DIR)))
 
     # Forwarded to launch_nodes.py, which mounts the zenoh build output. When
     # "zenoh_dir" is absent we leave the environment alone, so launch_nodes.py

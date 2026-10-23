@@ -1,8 +1,16 @@
 [submodule "zenoh"]
 	path = zenoh
-	url = https://github.com/jerry73204/zenoh.git
+	url = https://github.com/NEWSLabNTU/zenoh.git
 	# build_experiments.sh checks out branches inside zenoh/ and leaves gigabytes
 	# of target/ artifacts there, which would make `git status` permanently noisy.
 	# `dirty` suppresses that while still reporting commit moves, so an intentional
 	# pin update stays visible. Do NOT use `all` -- that would hide the pin itself.
 	ignore = dirty
+[submodule "ns-3"]
+	path = ns-3
+	url = https://github.com/NEWSLabNTU/ns-3-dev-git.git
+	branch = zenoh-experiment
+[submodule "nr"]
+	path = nr
+	url = https://github.com/NEWSLabNTU/5g-lena-nr.git
+	branch = bg-ue-mac-contention

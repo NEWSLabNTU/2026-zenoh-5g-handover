@@ -2,12 +2,11 @@
 #
 # Verify the ns-3 side is in the state the experiment expects, before running it.
 #
-# ns-3 and the nr module are pinned by verification rather than vendored as
-# submodules: contrib/nr is an active multi-branch workspace that gets switched
-# between experiment variants, so a submodule pin would report it modified
-# constantly and the signal would be ignored. A submodule also only constrains a
-# fresh clone -- it cannot tell you whether the tree you are about to run from
-# still has the sudo patch applied. This check runs at the moment that matters.
+# ns-3 and the nr module are submodules of this repository (ns-3/ and nr/, the
+# latter linked to ns-3/contrib/nr by setup_ns3.sh). A submodule pin only
+# constrains a fresh clone -- it cannot tell you whether the tree you are about
+# to run from still has the sudo patch applied, or whether nr was switched to
+# another branch since. This check runs at the moment that matters.
 #
 # Checks 1-3 and 5 block an experiment; only the ns-3 provenance check (4) warns,
 # since that SHA legitimately changes on a rebase while the sudo patch -- the
@@ -68,12 +67,12 @@ if [[ -z "$NS3_DIR" ]]; then
 import json5, os, sys
 try:
     with open('$SCRIPT_DIR/EXPERIMENT_CONFIG.json5') as f:
-        print(os.path.expanduser(json5.load(f).get('ns3_dir', '~/dev/ns-3-dev')))
+        print(os.path.join('$SCRIPT_DIR', os.path.expanduser(json5.load(f).get('ns3_dir', 'ns-3'))))
 except Exception:
     sys.exit(1)
 " 2>/dev/null)
   fi
-  [[ -n "$NS3_DIR" ]] || NS3_DIR="$HOME/dev/ns-3-dev"
+  [[ -n "$NS3_DIR" ]] || NS3_DIR="$SCRIPT_DIR/ns-3"
 fi
 
 fail=0
@@ -85,7 +84,7 @@ printf '\nns-3 checkout: %s\n\n' "$NS3_DIR"
 
 if [[ ! -d "$NS3_DIR" ]]; then
   printf '\033[1;31merror:\033[0m ns-3 directory does not exist: %s\n' "$NS3_DIR" >&2
-  printf 'Set ns3_dir in EXPERIMENT_CONFIG.json5, or pass --dir PATH.\n' >&2
+  printf 'Run ./setup_ns3.sh, set ns3_dir in EXPERIMENT_CONFIG.json5, or pass --dir PATH.\n' >&2
   exit 1
 fi
 
@@ -112,8 +111,9 @@ fi
 
 # --- 2. nr commit (FAIL) ------------------------------------------------------
 nr_dir="$NS3_DIR/contrib/nr"
-if [[ ! -d "$nr_dir/.git" ]]; then
+if [[ ! -e "$nr_dir/.git" ]]; then
   row "contrib/nr commit" "FAIL" "not a git checkout: $nr_dir"
+  note "run ./setup_ns3.sh to link the nr submodule into ns-3/contrib/nr"
   fail=1
 else
   nr_head=$(git -C "$nr_dir" rev-parse HEAD 2>/dev/null)
@@ -139,7 +139,7 @@ else
 fi
 
 # --- 4. ns-3 provenance (warn) ------------------------------------------------
-if [[ ! -d "$NS3_DIR/.git" ]]; then
+if [[ ! -e "$NS3_DIR/.git" ]]; then
   row "ns-3 provenance" "warn" "not a git checkout"
   warn=1
 else
@@ -170,7 +170,7 @@ fi
 lock="$NS3_DIR/.lock-ns3_linux_build"
 if [[ ! -f "$lock" ]]; then
   row "ns-3 build" "FAIL" "not configured -- no .lock-ns3_linux_build"
-  note "run: ./ns3 configure -d optimized --enable-examples && ./ns3 build"
+  note "run: ./setup_ns3.sh --build"
   fail=1
 else
   profile=$(grep -oP "BUILD_PROFILE = '\K[^']+" "$lock" 2>/dev/null)
@@ -178,7 +178,7 @@ else
     row "ns-3 build profile" "ok" "optimized"
   else
     row "ns-3 build profile" "FAIL" "${profile:-unknown} -- measurements will not be comparable"
-    note "run: ./ns3 configure -d optimized --enable-examples && ./ns3 build"
+    note "run: ./setup_ns3.sh --build"
     fail=1
   fi
 
